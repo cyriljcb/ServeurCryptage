@@ -96,6 +96,16 @@ public class BeanBDmetier {
         String sql = "UPDATE factures SET paye = 1 WHERE id = ?";
         BDg.executeUpdate(sql, idFacture);
     }
+    public String RechercherMDP(String login) throws SQLException {
+        String mdp = "";
+        String sql = "SELECT * FROM employes WHERE login = ?";
+        ResultSet rs = BDg.executeQuery(sql, login);
+        System.out.println("requete sql : "+sql);
+        while (rs.next()) {
+            mdp = (rs.getString(3));
+        }
+        return mdp;
+    }
 
     public void CouperCo() {
         BDg.closeConnection();

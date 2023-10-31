@@ -7,6 +7,10 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.sql.SQLException;
+
 public abstract class ThreadClient extends Thread
 {
     protected Protocole protocole;
@@ -48,7 +52,7 @@ public abstract class ThreadClient extends Thread
                 if (oos != null && ex.getReponse() != null)
                     oos.writeObject(ex.getReponse());
             }
-        } catch (IOException ex) {
+        } catch (IOException | SQLException | NoSuchAlgorithmException | NoSuchProviderException ex) {
             System.out.println("Erreur I/O");
         } catch (ClassNotFoundException ex) {
             System.out.println("Erreur requete invalide");

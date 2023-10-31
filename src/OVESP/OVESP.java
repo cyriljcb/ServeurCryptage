@@ -6,7 +6,11 @@ import Classe.Facture;
 import ServeurGeneriqueTCP.FinConnexionException;
 import ServeurGeneriqueTCP.Protocole;
 
+import java.io.IOException;
 import java.net.Socket;
+import java.security.NoSuchAlgorithmException;
+import java.security.NoSuchProviderException;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
@@ -28,7 +32,7 @@ public class OVESP implements Protocole {
     }
 
     @Override
-    public synchronized Reponse TraiteRequete(Requete requete, Socket socket) throws FinConnexionException {
+    public synchronized Reponse TraiteRequete(Requete requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         if (requete instanceof RequeteLogin) return TraiteRequeteLOGIN((RequeteLogin) requete, socket);
         if (requete instanceof RequeteLOGOUT) return TraiteRequeteLOGOUT((RequeteLOGOUT) requete);
         if (requete instanceof RequeteFacture) return TraiteRequeteFacture((RequeteFacture) requete);
@@ -37,22 +41,27 @@ public class OVESP implements Protocole {
         return null;
     }
 
-    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException {
+    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
-        boolean v;
+        boolean v = false;
         System.out.println("login :" + requete.getLogin() + " mdp : " + requete.getPassword());
 
-        if (clientsConnectes.containsKey(requete.getLogin())) {
-            System.out.println("deja connecté");
-            v = false; // Le client est déjà connecté
-        } else {
-            if (requete.isNouveau()) {
-                bean.CreationEmploye(requete.getLogin(), requete.getPassword());
-                v = true;
-            } else {
-                v = bean.LoginEmploye(requete.getLogin(), requete.getPassword());
-                System.out.println("v = "+v);
+        if (!clientsConnectes.containsKey(requete.getLogin())) {
+            String mdp = recuperMDP(requete.getLogin());
+            System.out.println("mdp = "+mdp);
+            if(!mdp.isEmpty())
+            {
+//                if (requete.isNouveau()) {
+//                    bean.CreationEmploye(requete.getLogin(), requete.getPassword());
+//                    v = true;
+//                } else {
+//                    v = bean.LoginEmploye(requete.getLogin(), requete.getPassword());
+                    if (requete.VerifyPassword(mdp))
+                        System.out.println("Bienvenue " + requete.getLogin() + " !");
+                //}
             }
+            else
+                System.out.println("client inconnu");
             if (v) {
                 clientsConnectes.put(requete.getLogin(), socket);
             }
@@ -113,6 +122,9 @@ public class OVESP implements Protocole {
             doubleDigit = !doubleDigit;
         }
         return (somme % 10 == 0);
+    }
+    public String recuperMDP(String login) throws SQLException {
+        return bean.RechercherMDP(login);
     }
 
 }
