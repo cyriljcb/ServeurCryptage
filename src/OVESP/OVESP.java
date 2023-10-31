@@ -23,7 +23,7 @@ public class OVESP implements Protocole {
         //logger = log;
         System.out.println("est passé ovesp");
         clientsConnectes = new HashMap<>();
-        bean = new BeanBDmetier("jdbc:mysql://192.168.47.128/PourStudent" , "Student" , "PassStudent1_");
+        bean = new BeanBDmetier("jdbc:mysql://192.168.126.128/PourStudent" , "Student" , "PassStudent1_");
     }
 
     @Override
@@ -44,28 +44,26 @@ public class OVESP implements Protocole {
     private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
-        System.out.println("login :" + requete.getLogin() + " mdp : " + requete.getPassword());
 
         if (!clientsConnectes.containsKey(requete.getLogin())) {
             String mdp = recuperMDP(requete.getLogin());
-            System.out.println("mdp = "+mdp);
             if(!mdp.isEmpty())
             {
-//                if (requete.isNouveau()) {
-//                    bean.CreationEmploye(requete.getLogin(), requete.getPassword());
-//                    v = true;
-//                } else {
-//                    v = bean.LoginEmploye(requete.getLogin(), requete.getPassword());
+                System.out.println("nom : "+requete.getLogin()+ " mdp : "+mdp);
                     if (requete.VerifyPassword(mdp))
+                    {
                         System.out.println("Bienvenue " + requete.getLogin() + " !");
-                //}
+                        v = true;
+                    }
+                    else
+                        System.out.println("probleme au niveau du mdp");
+                }
             }
             else
                 System.out.println("client inconnu");
             if (v) {
                 clientsConnectes.put(requete.getLogin(), socket);
             }
-        }
         return new ReponseLogin(v);
     }
 

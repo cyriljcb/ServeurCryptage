@@ -10,14 +10,13 @@ import java.util.Date;
 
 public class RequeteLogin implements Requete{
     private String login;
-    private String mdp;
 
     private long temps;
     private double alea;
     private byte[] digest;
 
     boolean nouveau = false;
-    public RequeteLogin(String l,String p,boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
+    public RequeteLogin(String l,String password,boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
         login = l;
         nouveau = v;
         // Construction du sel
@@ -26,8 +25,9 @@ public class RequeteLogin implements Requete{
 
         // Construction du digest salé
         MessageDigest md = MessageDigest.getInstance("SHA-1","BC");
+
         md.update(login.getBytes());
-        md.update(p.getBytes());
+        md.update(password.getBytes());
         //TODO faire un update pour le champ nouveau
         //md.update(nouveau.getBytes());
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -56,9 +56,6 @@ public class RequeteLogin implements Requete{
     }
     public String getLogin() {
         return login;
-    }
-    public String getPassword() {
-        return mdp;
     }
 
     public boolean isNouveau() {

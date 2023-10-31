@@ -1,8 +1,10 @@
 import OVESP.*;
 import ServeurGeneriqueTCP.*;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.security.Security;
 import java.util.Properties;
 
 public class Main {
@@ -11,6 +13,8 @@ public class Main {
         java.awt.EventQueue.invokeLater(new Runnable() {
 
             public void run() {
+
+                Security.addProvider(new BouncyCastleProvider());
                 Properties properties = new Properties();
                 FileInputStream input = null;
                 int port = 0;
