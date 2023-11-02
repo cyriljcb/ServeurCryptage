@@ -7,8 +7,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.sql.SQLException;
 
 public abstract class ThreadClient extends Thread
@@ -51,6 +51,8 @@ public abstract class ThreadClient extends Thread
                 System.out.println("Fin connexion demandée par protocole");
                 if (oos != null && ex.getReponse() != null)
                     oos.writeObject(ex.getReponse());
+            } catch (CertificateException | KeyStoreException | SignatureException | InvalidKeyException e) {
+                throw new RuntimeException(e);
             }
         } catch (IOException | SQLException | NoSuchAlgorithmException | NoSuchProviderException ex) {
             System.out.println("Erreur I/O");

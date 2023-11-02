@@ -6,10 +6,13 @@ import Classe.Facture;
 import ServeurGeneriqueTCP.FinConnexionException;
 import ServeurGeneriqueTCP.Protocole;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.Socket;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+import java.security.*;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
@@ -32,7 +35,7 @@ public class OVESP implements Protocole {
     }
 
     @Override
-    public synchronized Reponse TraiteRequete(Requete requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+    public synchronized Reponse TraiteRequete(Requete requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException {
         if (requete instanceof RequeteLogin) return TraiteRequeteLOGIN((RequeteLogin) requete, socket);
         if (requete instanceof RequeteLOGOUT) return TraiteRequeteLOGOUT((RequeteLOGOUT) requete);
         if (requete instanceof RequeteFacture) return TraiteRequeteFacture((RequeteFacture) requete);
@@ -41,19 +44,29 @@ public class OVESP implements Protocole {
         return null;
     }
 
-    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException {
+    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
 
         if (!clientsConnectes.containsKey(requete.getLogin())) {
             String mdp = recuperMDP(requete.getLogin());
+            // Récupération de la clé publique du client
+            PublicKey clePublique = RecupereClePubliqueClient();
+            System.out.println("Récupération clé publique client...");
             if(!mdp.isEmpty())
             {
                 System.out.println("nom : "+requete.getLogin()+ " mdp : "+mdp);
                     if (requete.VerifyPassword(mdp))
                     {
-                        System.out.println("Bienvenue " + requete.getLogin() + " !");
-                        v = true;
+                        if (requete.VerifySignature(clePublique))
+                        {
+                            System.out.println("donnée vérifiée");
+                            System.out.println("Bienvenue " + requete.getLogin() + " !");
+                            v = true;
+                        }
+                        else
+                            System.out.println("probleme de verification");
+
                     }
                     else
                         System.out.println("probleme au niveau du mdp");
@@ -123,6 +136,14 @@ public class OVESP implements Protocole {
     }
     public String recuperMDP(String login) throws SQLException {
         return bean.RechercherMDP(login);
+    }
+    public static PublicKey RecupereClePubliqueClient() throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
+        // Récupération de la clé publique de Jean-Marc dans le keystore deChristophe
+        KeyStore ks = KeyStore.getInstance("JKS");
+        ks.load(new FileInputStream("KeystoreServeurCryptage.jks"),"ServeurCryptage".toCharArray());
+        X509Certificate certif = (X509Certificate)ks.getCertificate("ClientCryptage");
+        PublicKey cle = certif.getPublicKey();
+        return cle;
     }
 
 }
