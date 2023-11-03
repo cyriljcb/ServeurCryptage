@@ -22,10 +22,6 @@ public class RequeteLogin implements Requete{
     public byte[] getData1() { return data1; }
     public void setData2(byte[] d) { data2 = d; }
     public byte[] getData2() { return data2; }
-
-    public byte[] getDigest() {
-        return digest;
-    }
     boolean nouveau = false;
     public RequeteLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         login = l;
@@ -57,9 +53,6 @@ public class RequeteLogin implements Requete{
         dos1.writeUTF(p);
         s.update(baos1.toByteArray());
         signature = s.sign();
-
-
-
 
     }
     public boolean VerifyPassword(String password) throws NoSuchAlgorithmException, NoSuchProviderException, IOException
@@ -104,12 +97,5 @@ public class RequeteLogin implements Requete{
     }
     public String getLogin() {
         return login;
-    }
-    public String getPassword() {
-        return mdp;
-    }
-
-    public boolean isNouveau() {
-        return nouveau;
     }
 }
