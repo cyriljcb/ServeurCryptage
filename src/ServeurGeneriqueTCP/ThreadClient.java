@@ -60,7 +60,7 @@ public abstract class ThreadClient extends Thread
                 throw new RuntimeException(e);
             }
         } catch (IOException | SQLException | NoSuchAlgorithmException | NoSuchProviderException ex) {
-            System.out.println("Erreur I/O");
+            System.out.println("Erreur I/O : "+ex.getMessage());
         } catch (ClassNotFoundException ex) {
             System.out.println("Erreur requete invalide");
         } finally {

@@ -51,6 +51,7 @@ public class OVESP implements Protocole {
     private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnrecoverableKeyException {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
+        String message="";
 
         if (!clientsConnectes.containsKey(requete.getLogin()))
         {
@@ -101,31 +102,50 @@ public class OVESP implements Protocole {
                        {
                            if (requete.VerifySignature(clePublique))
                            {
-                               System.out.println("donnée vérifiée");
-                               System.out.println("Bienvenue " + requete.getLogin() + " !");
-                               v = true;
+                               System.out.println("vérification de la clé publique réussie");
+                               System.out.println("données vérifiée");
+                                   System.out.println("Bienvenue " + requete.getLogin() + " !");
+                                   v = true;
                            }
                            else
-                               System.out.println("probleme de verification de la signature");
+                           {
+                               message = "probleme de verification de la signature";
+                           }
+
                        }
                    }
                    else
-                       System.out.println("probleme de l'intégrité du mdp");
+                   {
+                       message = "probleme de l'intégrité du mdp";
+                   }
+
                    }
                    else
-                       System.out.println("probleme de l'intégrité du login");
+                   {
+                        message = "probleme de l'intégrité du login";
+                   }
 
 
             }
             else
-                System.out.println("probleme validité de la clé publique");
+            {
+                message = "probleme validité de la clé publique";
+            }
+
         }
         else
-            System.out.println("client inconnu");
+        {
+            System.out.println("CLIENT DEJA CONNECTE");
+            System.out.println();
+            System.out.println();
+            System.out.println();
+            message = "client déja connecté";
+        }
+
         if (v) {
             clientsConnectes.put(requete.getLogin(), socket);
         }
-        return new ReponseLogin(v);
+        return new ReponseLogin(v,message);
     }
 
     private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{

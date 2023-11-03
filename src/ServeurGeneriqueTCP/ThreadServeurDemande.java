@@ -30,11 +30,14 @@ public class ThreadServeurDemande extends ThreadServeur
             }
             catch (IOException ex)
             {
-                System.out.println("Erreur I/O");
+                ex.printStackTrace();
+                System.out.println("attention Erreur I/O : " + ex.getMessage());
             }
+
         }
         System.out.println("TH Serveur (Demande) interrompu.");
         try { ssocket.close(); }
-        catch (IOException ex) { System.out.println("Erreur I/O"); }
+        catch (IOException ex) {   ex.printStackTrace();
+            System.out.println("AAAAHHHHHH Erreur I/O : " + ex.getMessage());}
     }
 }
