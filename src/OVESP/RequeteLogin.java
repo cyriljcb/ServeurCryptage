@@ -1,6 +1,8 @@
 package OVESP;
+import Cryptage.MyCrypto;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
+import javax.crypto.*;
 import java.io.*;
 import java.security.*;
 import java.security.cert.CertificateException;
@@ -13,21 +15,24 @@ public class RequeteLogin implements Requete{
     private long temps;
     private double alea;
     private byte[] digest;
-    private byte[] data;
+    private byte[] data1;
+    private byte[] data2;
     private byte[] signature;
-    public void setData(byte[] d) { data = d; }
-    public byte[] getData() { return data; }
+    public void setData1(byte[] d) { data1 = d; }
+    public byte[] getData1() { return data1; }
+    public void setData2(byte[] d) { data2 = d; }
+    public byte[] getData2() { return data2; }
 
+    public byte[] getDigest() {
+        return digest;
+    }
     boolean nouveau = false;
-    public RequeteLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException {
-        /*TODO question : est-ce que c'est la bonne facon de faire?
-        techniquement, aucune donnée ne circule en clair hormis le login*/
-
+    public RequeteLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         login = l;
         nouveau = v;
+
         mdp  = p;
-        System.out.println("le mot de passe dans le constructeur = "+mdp+" ce qu'il doit valoir : "+p);
-        //pour le digest salé
+        //pour le digest salé (intégrité des fichiers)
         // Construction du sel
         this.temps = new Date().getTime();
         this.alea = Math.random();
@@ -79,7 +84,6 @@ public class RequeteLogin implements Requete{
         s.initVerify(clePubliqueClient);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        System.out.println("login "+ login+ " mdp = "+mdp);
         dos.writeUTF(login);
         dos.writeUTF(mdp);
         s.update(baos.toByteArray());
@@ -87,6 +91,10 @@ public class RequeteLogin implements Requete{
         // Vérification de la signature reçue
         return s.verify(signature);
     }
+    public boolean VerifyLogin(String receivedLogin) {
+       return login.equals(receivedLogin);
+    }
+
     public static PrivateKey RecupereClePriveeClient() throws KeyStoreException, IOException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException {
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream("KeystoreClientCryptage.jks"),"ClientCryptage".toCharArray());

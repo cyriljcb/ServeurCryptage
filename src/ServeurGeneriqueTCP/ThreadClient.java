@@ -3,6 +3,9 @@ package ServeurGeneriqueTCP;
 import OVESP.Reponse;
 import OVESP.Requete;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -51,7 +54,9 @@ public abstract class ThreadClient extends Thread
                 System.out.println("Fin connexion demandée par protocole");
                 if (oos != null && ex.getReponse() != null)
                     oos.writeObject(ex.getReponse());
-            } catch (CertificateException | KeyStoreException | SignatureException | InvalidKeyException e) {
+            } catch (CertificateException | KeyStoreException | SignatureException | InvalidKeyException |
+                     UnrecoverableKeyException | NoSuchPaddingException | IllegalBlockSizeException |
+                     BadPaddingException e) {
                 throw new RuntimeException(e);
             }
         } catch (IOException | SQLException | NoSuchAlgorithmException | NoSuchProviderException ex) {
