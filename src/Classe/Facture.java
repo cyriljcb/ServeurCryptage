@@ -52,6 +52,22 @@ public class Facture implements Serializable {
             return new byte[0];
         }
     }
+    public static Facture fromDataInputStream(DataInputStream dis) {
+        try {
+            int id = dis.readInt();
+            int idClient = dis.readInt();
+            String date = dis.readUTF();
+            float montant = dis.readFloat();
+            boolean paye = dis.readBoolean();
+
+            return new Facture(id, idClient, date, montant, paye);
+        } catch (IOException e) {
+            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'une facture par défaut)
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     public int getId() {
         return id;
     }

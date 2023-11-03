@@ -130,16 +130,17 @@ public class OVESP implements Protocole {
             System.out.println("Clé vérifiée");
 
             factures = bean.getFactures(requete.getIdClient());
-
+            byte[] facturesBytes = FactureSerializer.serializeFactures(factures);
             // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
-            Gson gson = new Gson();
-            String facturesJSON = gson.toJson(factures);
-
+//            Gson gson = new Gson();
+//            String facturesJSON = gson.toJson(factures);
+//
             ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
             DataOutputStream dos1 = new DataOutputStream(baos1);
-
-            // Écrire la chaîne JSON dans le DataOutputStream
-            dos1.writeUTF(facturesJSON);
+//
+//            // Écrire la chaîne JSON dans le DataOutputStream
+//            dos1.writeUTF(facturesJSON);
+            dos1.write(facturesBytes);
             byte[] messageClair = baos1.toByteArray();
             messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
             System.out.println("le message crypté : "+messageCrypte);
@@ -223,5 +224,19 @@ public class OVESP implements Protocole {
         PrivateKey cle = (PrivateKey) ks.getKey("ServeurCryptage", "ServeurCryptage".toCharArray());
         return cle;
     }
-
+    public class FactureSerializer {
+        public static byte[] serializeFactures(List<Facture> factures) {
+            try {
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+                objectOutputStream.writeObject(factures);
+                objectOutputStream.close();
+                return byteArrayOutputStream.toByteArray();
+            } catch (IOException e) {
+                // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
+                e.printStackTrace();
+                return new byte[0]; // Ou retournez null
+            }
+        }
+    }
 }
