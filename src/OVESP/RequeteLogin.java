@@ -22,10 +22,6 @@ public class RequeteLogin implements Requete{
     public byte[] getData1() { return data1; }
     public void setData2(byte[] d) { data2 = d; }
     public byte[] getData2() { return data2; }
-    public byte[] getSignature()
-    {
-        return signature;
-    }
     boolean nouveau = false;
     public RequeteLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         login = l;

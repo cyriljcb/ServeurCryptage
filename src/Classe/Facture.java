@@ -1,6 +1,6 @@
 package Classe;
 
-import java.io.Serializable;
+import java.io.*;
 
 public class Facture implements Serializable {
     private int id;
@@ -16,7 +16,42 @@ public class Facture implements Serializable {
         this.montant = montant;
         this.paye = paye;
     }
+    public static Facture fromByteArray(byte[] byteArray) {
+        try {
+            ByteArrayInputStream bais = new ByteArrayInputStream(byteArray);
+            DataInputStream dis = new DataInputStream(bais);
 
+            int id = dis.readInt();
+            int idClient = dis.readInt();
+            String date = dis.readUTF();
+            float montant = dis.readFloat();
+            boolean paye = dis.readBoolean();
+
+            return new Facture(id, idClient, date, montant, paye);
+        } catch (IOException e) {
+            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'une facture par défaut)
+            e.printStackTrace();
+            return null;
+        }
+    }
+    public byte[] toByteArray() {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+
+            dos.writeInt(id);
+            dos.writeInt(idClient);
+            dos.writeUTF(date);
+            dos.writeFloat(montant);
+            dos.writeBoolean(paye);
+
+            return baos.toByteArray();
+        } catch (IOException e) {
+            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
+            e.printStackTrace();
+            return new byte[0];
+        }
+    }
     public int getId() {
         return id;
     }

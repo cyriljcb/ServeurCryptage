@@ -6,6 +6,7 @@ import Classe.Facture;
 import ServeurGeneriqueTCP.FinConnexionException;
 import ServeurGeneriqueTCP.Protocole;
 import Cryptage.*;
+import com.google.gson.Gson;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -23,14 +24,14 @@ import java.util.List;
 
 public class OVESP implements Protocole {
     private HashMap<String, Socket> clientsConnectes;
-
-    private  BeanBDmetier bean;
+    private SecretKey cleSession;
+    private BeanBDmetier bean;
 
     public OVESP() {
         //logger = log;
         System.out.println("est passé ovesp");
         clientsConnectes = new HashMap<>();
-        bean = new BeanBDmetier("jdbc:mysql://192.168.126.128/PourStudent" , "Student" , "PassStudent1_");
+        bean = new BeanBDmetier("jdbc:mysql://192.168.126.128/PourStudent", "Student", "PassStudent1_");
     }
 
     @Override
@@ -51,21 +52,10 @@ public class OVESP implements Protocole {
     private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnrecoverableKeyException {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
-        String message="";
+        String message = "";
 
-        if (!clientsConnectes.containsKey(requete.getLogin()))
-        {
-
-
-        //comparer la clé publique
-        //verifier l'intégrité du login
-            //Décrypter la clé de session
-        //Vérifier l'intégrité du mot de passe
-        // le comparer avec ce qu'on a décrypter
-        //Signature
-
-            if(PublicKeyVerification.verifyClientPublicKey("KeystoreServeurCryptage.jks","ServeurCryptage".toCharArray(),"ClientCryptage"))
-            {
+        if (!clientsConnectes.containsKey(requete.getLogin())) {
+            if (PublicKeyVerification.verifyClientPublicKey("KeystoreServeurCryptage.jks", "ServeurCryptage".toCharArray(), "ClientCryptage")) {
                 //la clé publique est bonne
                 PublicKey clePublique = RecupereClePubliqueClient();
                 System.out.println("Récupération clé publique client...");
@@ -77,93 +67,102 @@ public class OVESP implements Protocole {
                 // Decryptage asymétrique de la clé de session
                 byte[] cleSessionDecryptee;
                 System.out.println("Clé session cryptée reçue = " + new String(requete.getData1()));
-                cleSessionDecryptee = MyCrypto.DecryptAsymRSA(clePriveeServeur,requete.getData1());
-                SecretKey cleSession = new SecretKeySpec(cleSessionDecryptee,"DES");
+                cleSessionDecryptee = MyCrypto.DecryptAsymRSA(clePriveeServeur, requete.getData1());
+                cleSession = new SecretKeySpec(cleSessionDecryptee, "DES");
                 System.out.println("Decryptage asymétrique de la clé de session...");
 
                 //décryptage
                 byte[] messageDecrypte;
                 System.out.println("Message reçu = " + new String(requete.getData2()));
-                messageDecrypte = MyCrypto.DecryptSymDES(cleSession,requete.getData2());
+                messageDecrypte = MyCrypto.DecryptSymDES(cleSession, requete.getData2());
                 System.out.println("Decryptage symétrique du message...");
 
                 // Récupération des données claires
                 ByteArrayInputStream bais = new ByteArrayInputStream(messageDecrypte);
                 DataInputStream dis = new DataInputStream(bais);
                 String nom = dis.readUTF();
-                String motDePasse= dis.readUTF();
+                String motDePasse = dis.readUTF();
 
-               if(requete.VerifyLogin(nom))
-               {
-                   if(requete.VerifyPassword(motDePasse))
-                   {
-                       String mdp = recuperMdpBD(requete.getLogin());   //c'est le mdp qui est dans la BD
-                       if(mdp.equals(motDePasse))
-                       {
-                           if (requete.VerifySignature(clePublique))
-                           {
-                               System.out.println("vérification de la clé publique réussie");
-                               System.out.println("données vérifiée");
-                                   System.out.println("Bienvenue " + requete.getLogin() + " !");
-                                   v = true;
-                           }
-                           else
-                           {
-                               message = "probleme de verification de la signature";
-                           }
+                if (requete.VerifyLogin(nom)) {
+                    if (requete.VerifyPassword(motDePasse)) {
+                        String mdp = recuperMdpBD(requete.getLogin());   //c'est le mdp qui est dans la BD
+                        if (mdp.equals(motDePasse)) {
+                            if (requete.VerifySignature(clePublique)) {
+                                System.out.println("vérification de la clé publique réussie");
+                                System.out.println("données vérifiée");
+                                System.out.println("Bienvenue " + requete.getLogin() + " !");
+                                v = true;
+                            } else {
+                                message = "probleme de verification de la signature";
+                            }
 
-                       }
-                   }
-                   else
-                   {
-                       message = "probleme de l'intégrité du mdp";
-                   }
-
-                   }
-                   else
-                   {
-                        message = "probleme de l'intégrité du login";
-                   }
+                        }
+                    } else {
+                        message = "probleme de l'intégrité du mdp";
+                    }
+                } else {
+                    message = "probleme de l'intégrité du login";
+                }
 
 
-            }
-            else
-            {
+            } else {
                 message = "probleme validité de la clé publique";
             }
 
-        }
-        else
-        {
-            System.out.println("CLIENT DEJA CONNECTE");
-            System.out.println();
-            System.out.println();
-            System.out.println();
+        } else {
             message = "client déja connecté";
         }
 
         if (v) {
             clientsConnectes.put(requete.getLogin(), socket);
         }
-        return new ReponseLogin(v,message);
+        return new ReponseLogin(v, message);
     }
 
-    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{
-        System.out.println("RequeteFACTURE reçue " );
-        List<Facture> factures = bean.getFactures(requete.getIdClient());
-        return new ReponseFacture(factures);
+    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+        String message = "";
+        List<Facture> factures = null;
+
+        byte[] messageCrypte = new byte[0];
+        System.out.println("RequeteFACTURE reçue ");
+
+        if (requete.VerifySignature(RecupereClePubliqueClient())) {
+            System.out.println("Clé vérifiée");
+
+            factures = bean.getFactures(requete.getIdClient());
+
+            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
+            Gson gson = new Gson();
+            String facturesJSON = gson.toJson(factures);
+
+            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+            DataOutputStream dos1 = new DataOutputStream(baos1);
+
+            // Écrire la chaîne JSON dans le DataOutputStream
+            dos1.writeUTF(facturesJSON);
+            byte[] messageClair = baos1.toByteArray();
+            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
+            System.out.println("le message crypté : "+messageCrypte);
+        } else {
+            message = "Problème de vérification de la signature";
+        }
+
+        return new ReponseFacture(messageCrypte, message);
     }
-    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException{
-        System.out.println("RequetePayeFACTURE reçue " );
-        if(testNulVisa(requete.getNumVisa()))
+
+    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException {
+        System.out.println("RequetePayeFACTURE reçue ");
+        if (testNulVisa(requete.getNumVisa()))
             bean.PayFacture(requete.getNumFacture());
         return new ReponsePayeFacture(testNulVisa(requete.getNumVisa()));
     }
-    private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException{
-        System.out.println("RequeteCaddie reçue " );
+
+    private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException {
+        System.out.println("RequeteCaddie reçue ");
         List<Caddie> list = bean.getCaddie(requete.getIdFacture());
         return new ReponseCaddie(list);
     }
+
     //
     private synchronized ReponseLogout TraiteRequeteLOGOUT(RequeteLOGOUT requete) throws FinConnexionException {
         System.out.println("RequeteLOGOUT reçue de " + requete.getLogin());
@@ -174,6 +173,7 @@ public class OVESP implements Protocole {
         afficherClientsConnectes();
         return new ReponseLogout(true);
     }
+
     public void afficherClientsConnectes() {
         System.out.println("Clients connectés :");
         for (String client : clientsConnectes.keySet()) {
@@ -202,22 +202,25 @@ public class OVESP implements Protocole {
         }
         return (somme % 10 == 0);
     }
+
     public String recuperMdpBD(String login) throws SQLException {
         return bean.RechercherMDP(login);
     }
+
     public static PublicKey RecupereClePubliqueClient() throws KeyStoreException, IOException, CertificateException, NoSuchAlgorithmException {
         // Récupération de la clé publique de Jean-Marc dans le keystore deChristophe
         KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream("KeystoreServeurCryptage.jks"),"ServeurCryptage".toCharArray());
-        X509Certificate certif = (X509Certificate)ks.getCertificate("ClientCryptage");
+        ks.load(new FileInputStream("KeystoreServeurCryptage.jks"), "ServeurCryptage".toCharArray());
+        X509Certificate certif = (X509Certificate) ks.getCertificate("ClientCryptage");
         PublicKey cle = certif.getPublicKey();
         return cle;
     }
+
     public static PrivateKey RecupereClePriveeServeur() throws KeyStoreException, IOException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException {
         KeyStore ks = KeyStore.getInstance("JKS");
-        ks.load(new FileInputStream("KeystoreServeurCryptage.jks"),"ServeurCryptage".toCharArray());
+        ks.load(new FileInputStream("KeystoreServeurCryptage.jks"), "ServeurCryptage".toCharArray());
 
-        PrivateKey cle = (PrivateKey) ks.getKey("ServeurCryptage","ServeurCryptage".toCharArray());
+        PrivateKey cle = (PrivateKey) ks.getKey("ServeurCryptage", "ServeurCryptage".toCharArray());
         return cle;
     }
 

@@ -5,12 +5,25 @@ import Classe.Facture;
 import java.util.List;
 
 public class ReponseFacture implements Reponse{
-    private List<Facture> facturelist;
+    private List<Facture> facturelist = null;
+    private byte[] factureCrypte;
+    private String message;
 
-    ReponseFacture(List<Facture> facture) {
-        facturelist = facture;
+    ReponseFacture(byte[] facture,String message) {
+        if(message.isEmpty())
+            factureCrypte = facture;
+        else
+            this.message = message;
     }
     public List<Facture> getFacture() {
         return facturelist;
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public byte[] getFactureCrypte() {
+        return factureCrypte;
     }
 }
