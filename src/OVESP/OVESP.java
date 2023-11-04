@@ -8,10 +8,7 @@ import ServeurGeneriqueTCP.Protocole;
 import Cryptage.*;
 import com.google.gson.Gson;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.crypto.SecretKey;
+import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.*;
 import java.net.Socket;
@@ -119,45 +116,75 @@ public class OVESP implements Protocole {
         return new ReponseLogin(v, message);
     }
 
-    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
-        String message = "";
-        List<Facture> factures = null;
-
-        byte[] messageCrypte = new byte[0];
-        System.out.println("RequeteFACTURE reçue ");
-
-        if (requete.VerifySignature(RecupereClePubliqueClient())) {
-            System.out.println("Clé vérifiée");
-
-            factures = bean.getFactures(requete.getIdClient());
-            byte[] facturesBytes = FactureSerializer.serializeFactures(factures);
-            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
-//            Gson gson = new Gson();
-//            String facturesJSON = gson.toJson(factures);
+//    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+//        String message = "";
+//        List<Facture> factures = null;
 //
-            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
-            DataOutputStream dos1 = new DataOutputStream(baos1);
+//        byte[] messageCrypte = new byte[0];
+//        System.out.println("RequeteFACTURE reçue ");
 //
-//            // Écrire la chaîne JSON dans le DataOutputStream
-//            dos1.writeUTF(facturesJSON);
-            dos1.write(facturesBytes);
-            byte[] messageClair = baos1.toByteArray();
-            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
-            System.out.println("le message crypté : "+messageCrypte);
-        } else {
-            message = "Problème de vérification de la signature";
-        }
+//        if (requete.VerifySignature(RecupereClePubliqueClient())) {
+//            System.out.println("Clé vérifiée");
+//
+//            factures = bean.getFactures(requete.getIdClient());
+//            byte[] facturesBytes = FactureSerializer.serializeFactures(factures);
+//            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
+////            Gson gson = new Gson();
+////            String facturesJSON = gson.toJson(factures);
+////
+//            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+//            DataOutputStream dos1 = new DataOutputStream(baos1);
+////
+////            // Écrire la chaîne JSON dans le DataOutputStream
+////            dos1.writeUTF(facturesJSON);
+//            dos1.write(facturesBytes);
+//            byte[] messageClair = baos1.toByteArray();
+//            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
+//            System.out.println("le message crypté : "+messageCrypte);
+//        } else {
+//            message = "Problème de vérification de la signature";
+//        }
+//
+//        return new ReponseFacture(messageCrypte, message);
+//    }
+private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{
+    System.out.println("RequeteFACTURE reçue " );
+    List<Facture> factures = bean.getFactures(requete.getIdClient());
+    return new ReponseFacture(factures);
+}
+//    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException {
+//        System.out.println("RequetePayeFACTURE reçue ");
+//        if (testNulVisa(requete.getNumVisa()))
+//            bean.PayFacture(requete.getNumFacture());
+//        return new ReponsePayeFacture(testNulVisa(requete.getNumVisa()));
+//    }
+private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
+    System.out.println("RequetePayeFACTURE reçue " );
+    //décryptage
+    byte[] messageDecrypte;
+    System.out.println("Message reçu = " + new String(requete.getChaineCrypte()));
+    messageDecrypte = MyCrypto.DecryptSymDES(cleSession,requete.getChaineCrypte());
+    System.out.println("Decryptage symétrique du message...");
 
-        return new ReponseFacture(messageCrypte, message);
-    }
+    // Récupération des données claires
+    ByteArrayInputStream bais = new ByteArrayInputStream(messageDecrypte);
+    DataInputStream dis = new DataInputStream(bais);
+    String numFact = dis.readUTF();
+    String nom = dis.readUTF();
+    String numVisa= dis.readUTF();
+    if(testNulVisa(numVisa))
+        bean.PayFacture(numFact);
+    //HMAC
+    Mac hm = Mac.getInstance("HMAC-MD5", "BC");
+    hm.init(cleSession);
+    boolean v = testNulVisa(numVisa);
+    byte[] vBytes = new byte[] { (byte) (v ? 1 : 0) }; // Convertit le boolean en tableau de bytes (1 pour true, 0 pour false)
+    hm.update(vBytes);
+    byte[] hmac = hm.doFinal() ;
 
-    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException {
-        System.out.println("RequetePayeFACTURE reçue ");
-        if (testNulVisa(requete.getNumVisa()))
-            bean.PayFacture(requete.getNumFacture());
-        return new ReponsePayeFacture(testNulVisa(requete.getNumVisa()));
-    }
-
+    //return new ReponsePayeFacture(testNulVisa(numVisa));
+    return new ReponsePayeFacture(vBytes,hmac);
+}
     private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException {
         System.out.println("RequeteCaddie reçue ");
         List<Caddie> list = bean.getCaddie(requete.getIdFacture());

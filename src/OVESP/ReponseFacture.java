@@ -15,6 +15,9 @@ public class ReponseFacture implements Reponse{
         else
             this.message = message;
     }
+    ReponseFacture(List<Facture> facture) {
+        facturelist = facture;
+    }
     public List<Facture> getFacture() {
         return facturelist;
     }
