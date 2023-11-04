@@ -79,21 +79,38 @@ public class OVESP implements Protocole {
                 DataInputStream dis = new DataInputStream(bais);
                 String nom = dis.readUTF();
                 String motDePasse = dis.readUTF();
-
+                boolean creation = dis.readBoolean();
+                System.out.println("creation : "+creation);
+                System.out.println();
+                System.out.println();
+                System.out.println();
                 if (requete.VerifyLogin(nom)) {
                     if (requete.VerifyPassword(motDePasse)) {
-                        String mdp = recuperMdpBD(requete.getLogin());   //c'est le mdp qui est dans la BD
-                        if (mdp.equals(motDePasse)) {
+                        if(creation)
+                        {
                             if (requete.VerifySignature(clePublique)) {
                                 System.out.println("vérification de la clé publique réussie");
-                                System.out.println("données vérifiée");
-                                System.out.println("Bienvenue " + requete.getLogin() + " !");
+                                bean.CreationEmploye(nom, motDePasse);
                                 v = true;
-                            } else {
-                                message = "probleme de verification de la signature";
+                                message = ("Bienvenue "+nom+ " !");
                             }
-
                         }
+                        else {
+
+                            String mdp = recuperMdpBD(nom);   //c'est le mdp qui est dans la BD
+                            if (mdp.equals(motDePasse)) {
+                                if (requete.VerifySignature(clePublique)) {
+                                    System.out.println("vérification de la clé publique réussie");
+                                    System.out.println("données vérifiée");
+                                    message = ("Bienvenue "+nom+ " !");
+                                    v = true;
+                                } else {
+                                    message = "probleme de verification de la signature";
+                                }
+
+                            }
+                        }
+
                     } else {
                         message = "probleme de l'intégrité du mdp";
                     }
@@ -227,7 +244,6 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
                         digit -= 9;
                     }
                 }
-
                 somme += digit;
                 doubleDigit = !doubleDigit;
             }

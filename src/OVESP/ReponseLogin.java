@@ -6,8 +6,7 @@ public class ReponseLogin implements Reponse {
 
     ReponseLogin(boolean v,String message) {
         valide = v;
-        if(!v)
-            this.message = message;
+        this.message = message;
     }
     public boolean isValide() {
         return valide;
