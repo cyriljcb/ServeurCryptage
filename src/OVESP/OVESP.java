@@ -116,42 +116,40 @@ public class OVESP implements Protocole {
         return new ReponseLogin(v, message);
     }
 
-//    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
-//        String message = "";
-//        List<Facture> factures = null;
+    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+        String message = "";
+        List<Facture> factures = null;
+
+        byte[] messageCrypte = new byte[0];
+        System.out.println("RequeteFACTURE reçue ");
+
+        if (requete.VerifySignature(RecupereClePubliqueClient())) {
+            System.out.println("Clé vérifiée");
+
+            factures = bean.getFactures(requete.getIdClient());
+            byte[] facturesBytes = serializeFactures(factures);
+            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
+//            Gson gson = new Gson();
+//            String facturesJSON = gson.toJson(factures);
 //
-//        byte[] messageCrypte = new byte[0];
-//        System.out.println("RequeteFACTURE reçue ");
-//
-//        if (requete.VerifySignature(RecupereClePubliqueClient())) {
-//            System.out.println("Clé vérifiée");
-//
-//            factures = bean.getFactures(requete.getIdClient());
-//            byte[] facturesBytes = FactureSerializer.serializeFactures(factures);
-//            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
-////            Gson gson = new Gson();
-////            String facturesJSON = gson.toJson(factures);
-////
-//            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
-//            DataOutputStream dos1 = new DataOutputStream(baos1);
-////
-////            // Écrire la chaîne JSON dans le DataOutputStream
-////            dos1.writeUTF(facturesJSON);
-//            dos1.write(facturesBytes);
-//            byte[] messageClair = baos1.toByteArray();
-//            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
-//            System.out.println("le message crypté : "+messageCrypte);
-//        } else {
-//            message = "Problème de vérification de la signature";
-//        }
-//
-//        return new ReponseFacture(messageCrypte, message);
-//    }
-private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{
-    System.out.println("RequeteFACTURE reçue " );
-    List<Facture> factures = bean.getFactures(requete.getIdClient());
-    return new ReponseFacture(factures);
-}
+            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+            DataOutputStream dos1 = new DataOutputStream(baos1);
+
+            dos1.write(facturesBytes);
+            byte[] messageClair = baos1.toByteArray();
+            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
+            System.out.println("le message crypté : "+messageCrypte);
+        } else {
+            message = "Problème de vérification de la signature";
+        }
+
+        return new ReponseFacture(messageCrypte, message);
+    }
+//private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{
+//    System.out.println("RequeteFACTURE reçue " );
+//    List<Facture> factures = bean.getFactures(requete.getIdClient());
+//    return new ReponseFacture(factures);
+//}
 //    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException {
 //        System.out.println("RequetePayeFACTURE reçue ");
 //        if (testNulVisa(requete.getNumVisa()))
@@ -251,19 +249,25 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
         PrivateKey cle = (PrivateKey) ks.getKey("ServeurCryptage", "ServeurCryptage".toCharArray());
         return cle;
     }
-    public class FactureSerializer {
-        public static byte[] serializeFactures(List<Facture> factures) {
-            try {
-                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-                objectOutputStream.writeObject(factures);
-                objectOutputStream.close();
-                return byteArrayOutputStream.toByteArray();
-            } catch (IOException e) {
-                // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
-                e.printStackTrace();
-                return new byte[0]; // Ou retournez null
+    public byte[] serializeFactures(List<Facture> factures) {
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+
+            // Écrivez le nombre de factures dans la liste
+            dos.writeInt(factures.size());
+
+            // Parcourez la liste et écrivez chaque facture sous forme de tableau de bytes
+            for (Facture facture : factures) {
+                byte[] factureBytes = facture.toByteArray();
+                dos.write(factureBytes);
             }
+
+            return baos.toByteArray();
+        } catch (IOException e) {
+            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
+            e.printStackTrace();
+            return new byte[0];
         }
     }
 }
