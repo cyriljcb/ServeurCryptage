@@ -21,7 +21,7 @@ import java.util.List;
 
 public class OVESP implements Protocole {
     private HashMap<String, Socket> clientsConnectes;
-    private SecretKey cleSession;
+    private SecretKey cleSession;  //TODO faire une liste
     private BeanBDmetier bean;
 
     public OVESP() {
@@ -124,13 +124,10 @@ public class OVESP implements Protocole {
         System.out.println("RequeteFACTURE reçue ");
 
         if (requete.VerifySignature(RecupereClePubliqueClient())) {
-            System.out.println("Clé vérifiée");
+            System.out.println("signature vérifiée");
 
             factures = bean.getFactures(requete.getIdClient());
             byte[] facturesBytes = serializeFactures(factures);
-            // Utiliser Gson pour convertir la liste de factures en une chaîne JSON
-//            Gson gson = new Gson();
-//            String facturesJSON = gson.toJson(factures);
 //
             ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
             DataOutputStream dos1 = new DataOutputStream(baos1);
@@ -145,17 +142,7 @@ public class OVESP implements Protocole {
 
         return new ReponseFacture(messageCrypte, message);
     }
-//private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException{
-//    System.out.println("RequeteFACTURE reçue " );
-//    List<Facture> factures = bean.getFactures(requete.getIdClient());
-//    return new ReponseFacture(factures);
-//}
-//    private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException {
-//        System.out.println("RequetePayeFACTURE reçue ");
-//        if (testNulVisa(requete.getNumVisa()))
-//            bean.PayFacture(requete.getNumFacture());
-//        return new ReponsePayeFacture(testNulVisa(requete.getNumVisa()));
-//    }
+
 private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
     System.out.println("RequetePayeFACTURE reçue " );
     //décryptage
@@ -183,10 +170,27 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
     //return new ReponsePayeFacture(testNulVisa(numVisa));
     return new ReponsePayeFacture(vBytes,hmac);
 }
-    private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException {
-        System.out.println("RequeteCaddie reçue ");
-        List<Caddie> list = bean.getCaddie(requete.getIdFacture());
-        return new ReponseCaddie(list);
+    private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+        String message = "";
+        List<Caddie> list = null;
+
+        byte[] messageCrypte = new byte[0];
+        if (requete.VerifySignature(RecupereClePubliqueClient())) {
+            System.out.println("signature vérifiée");
+             list = bean.getCaddie(requete.getIdFacture());
+            byte[] CaddieBytes = serializeCaddie(list);
+            ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
+            DataOutputStream dos1 = new DataOutputStream(baos1);
+
+            dos1.write(CaddieBytes);
+            byte[] messageClair = baos1.toByteArray();
+            messageCrypte = MyCrypto.CryptSymDES(cleSession,messageClair);
+            System.out.println("le message crypté : "+messageCrypte);
+        }else {
+            message = "Problème de vérification de la signature";
+        }
+
+        return new ReponseCaddie(messageCrypte, message);
     }
 
     //
@@ -210,23 +214,28 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
     public static boolean testNulVisa(String numVisa) {
         // dans le cas ou on rentre des caractères autre que des chiffres
         numVisa = numVisa.replaceAll("[^0-9]", "");
+        if(numVisa.length()==16)
+        {
+            int somme = 0;
+            boolean doubleDigit = false;
+            for (int i = numVisa.length() - 1; i >= 0; i--) {
+                int digit = Character.getNumericValue(numVisa.charAt(i));
 
-        int somme = 0;
-        boolean doubleDigit = false;
-        for (int i = numVisa.length() - 1; i >= 0; i--) {
-            int digit = Character.getNumericValue(numVisa.charAt(i));
-
-            if (doubleDigit) {
-                digit *= 2;
-                if (digit > 9) {
-                    digit -= 9;
+                if (doubleDigit) {
+                    digit *= 2;
+                    if (digit > 9) {
+                        digit -= 9;
+                    }
                 }
-            }
 
-            somme += digit;
-            doubleDigit = !doubleDigit;
+                somme += digit;
+                doubleDigit = !doubleDigit;
+            }
+            return (somme % 10 == 0);
         }
-        return (somme % 10 == 0);
+        else
+            return false;
+
     }
 
     public String recuperMdpBD(String login) throws SQLException {
@@ -253,19 +262,28 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             DataOutputStream dos = new DataOutputStream(baos);
-
-            // Écrivez le nombre de factures dans la liste
             dos.writeInt(factures.size());
-
-            // Parcourez la liste et écrivez chaque facture sous forme de tableau de bytes
             for (Facture facture : factures) {
                 byte[] factureBytes = facture.toByteArray();
                 dos.write(factureBytes);
             }
-
             return baos.toByteArray();
         } catch (IOException e) {
-            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
+            e.printStackTrace();
+            return new byte[0];
+        }
+    }
+    public byte[] serializeCaddie(List<Caddie> caddies) {                //peut etre faire un template de SerializeList
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(baos);
+            dos.writeInt(caddies.size());
+            for (Caddie caddie : caddies) {
+                byte[] factureBytes = caddie.toByteArray();
+                dos.write(factureBytes);
+            }
+            return baos.toByteArray();
+        } catch (IOException e) {
             e.printStackTrace();
             return new byte[0];
         }
