@@ -1,4 +1,4 @@
-package OVESP;
+package VESPAPS;
 
 import Bean.BeanBDmetier;
 import Classe.Caddie;
@@ -6,7 +6,6 @@ import Classe.Facture;
 import ServeurGeneriqueTCP.FinConnexionException;
 import ServeurGeneriqueTCP.Protocole;
 import Cryptage.*;
-import com.google.gson.Gson;
 
 import javax.crypto.*;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,34 +18,70 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
-public class OVESP implements Protocole {
+public class VESPAPS implements Protocole {
     private HashMap<String, Socket> clientsConnectes;
     private SecretKey cleSession;  //TODO faire une liste
     private BeanBDmetier bean;
 
-    public OVESP() {
+    public VESPAPS() {
         //logger = log;
-        System.out.println("est passé ovesp");
         clientsConnectes = new HashMap<>();
-        bean = new BeanBDmetier("jdbc:mysql://192.168.126.128/PourStudent", "Student", "PassStudent1_");
+        bean = new BeanBDmetier("jdbc:mysql://192.168.47.128/PourStudent", "Student", "PassStudent1_");
     }
 
     @Override
     public String getNom() {
-        return "OVESP";
+        return "VESPAPS";
     }
 
     @Override
-    public synchronized Reponse TraiteRequete(Requete requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnrecoverableKeyException {
-        if (requete instanceof RequeteLogin) return TraiteRequeteLOGIN((RequeteLogin) requete, socket);
-        if (requete instanceof RequeteLOGOUT) return TraiteRequeteLOGOUT((RequeteLOGOUT) requete);
-        if (requete instanceof RequeteFacture) return TraiteRequeteFacture((RequeteFacture) requete);
-        if (requete instanceof RequetePayeFacture) return TraiteRequetePayeFacture((RequetePayeFacture) requete);
-        if (requete instanceof RequeteCaddie) return TraiteRequeteCaddie((RequeteCaddie) requete);
+    public synchronized Reponse TraiteRequete(Requete requete, Socket socket){
+        if (requete instanceof RequeteLogin) {
+            try {
+                return TraiteRequeteLOGIN((RequeteLogin) requete, socket);
+            } catch (Exception e) {
+                System.out.println("problème dans le requeteLogin : "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        if(requete instanceof  RequeteLOGOUT) {
+            try
+            {
+                return TraiteRequeteLOGOUT((RequeteLOGOUT) requete);
+            }
+            catch (Exception e) {
+                System.out.println("problème dans le requeteLogin : "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        if (requete instanceof RequeteFacture) {
+            try{
+                return TraiteRequeteFacture((RequeteFacture) requete);
+            } catch (Exception e) {
+                System.out.println("problème dans le RequeteFacture : "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        if (requete instanceof RequetePayeFacture) {
+            try{
+                return TraiteRequetePayeFacture((RequetePayeFacture) requete);
+            } catch (Exception e) {
+                System.out.println("problème dans le requetePayeFacture : "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        if (requete instanceof RequeteCaddie) {
+            try{
+                return TraiteRequeteCaddie((RequeteCaddie) requete);
+            } catch (Exception e) {
+                System.out.println("problème dans le requetePayeFacture : "+e.getMessage());
+                e.printStackTrace();
+            }
+        }
         return null;
     }
 
-    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws FinConnexionException, SQLException, NoSuchAlgorithmException, IOException, NoSuchProviderException, CertificateException, KeyStoreException, SignatureException, InvalidKeyException, NoSuchPaddingException, IllegalBlockSizeException, BadPaddingException, UnrecoverableKeyException {
+    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws Exception {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
         String message = "";
@@ -145,7 +180,6 @@ public class OVESP implements Protocole {
 
             factures = bean.getFactures(requete.getIdClient());
             byte[] facturesBytes = serializeFactures(factures);
-//
             ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
             DataOutputStream dos1 = new DataOutputStream(baos1);
 
@@ -184,7 +218,6 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
     hm.update(vBytes);
     byte[] hmac = hm.doFinal() ;
 
-    //return new ReponsePayeFacture(testNulVisa(numVisa));
     return new ReponsePayeFacture(vBytes,hmac);
 }
     private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {

@@ -1,4 +1,4 @@
-import OVESP.*;
+import VESPAPS.*;
 import ServeurGeneriqueTCP.*;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
@@ -37,7 +37,7 @@ public class Main {
                 }
                 Protocole protocole;
                 ThreadServeur threadServeur;
-                protocole = new OVESP();
+                protocole = new VESPAPS();
                 try {
                     System.out.println("port : "+port);
                     threadServeur = new ThreadServeurDemande(port, protocole);

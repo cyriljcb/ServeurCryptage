@@ -1,6 +1,4 @@
-package OVESP;
-import Cryptage.MyCrypto;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+package VESPAPS;
 
 import javax.crypto.*;
 import java.io.*;
@@ -55,7 +53,7 @@ public class RequeteLogin implements Requete{
         signature = s.sign();
 
     }
-    public boolean VerifyPassword(String password) throws NoSuchAlgorithmException, NoSuchProviderException, IOException
+    public boolean VerifyPassword(String password) throws Exception
     {
         // Construction du digest local
         MessageDigest md = MessageDigest.getInstance("SHA-1","BC");

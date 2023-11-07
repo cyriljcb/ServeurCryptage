@@ -1,4 +1,4 @@
-package OVESP;
+package VESPAPS;
 
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -7,23 +7,20 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-public class RequeteFacture implements Requete{
-    private String idClient;
+public class RequeteCaddie implements Requete{
+    private String idFacture;
     private byte[] signature;
-    public RequeteFacture(String idCli) throws NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, InvalidKeyException, SignatureException {
-        idClient = idCli;
+    public RequeteCaddie(String idFact) throws NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, InvalidKeyException, SignatureException {
+        idFacture = idFact;
         Signature s = Signature.getInstance("SHA1withRSA","BC");
         s.initSign(RecupereClePriveeClient());
         ByteArrayOutputStream baos1 = new ByteArrayOutputStream();
         DataOutputStream dos1 = new DataOutputStream(baos1);
-        dos1.writeUTF(idCli);
+        dos1.writeUTF(idFacture);
         s.update(baos1.toByteArray());
         signature = s.sign();
     }
-
-    public String getIdClient() {
-        return idClient;
-    }
+    public String getIdFacture(){return idFacture;}
     public static PrivateKey RecupereClePriveeClient() throws KeyStoreException, IOException, UnrecoverableKeyException, NoSuchAlgorithmException, CertificateException {
         KeyStore ks = KeyStore.getInstance("JKS");
         ks.load(new FileInputStream("KeystoreClientCryptage.jks"),"ClientCryptage".toCharArray());
@@ -37,9 +34,8 @@ public class RequeteFacture implements Requete{
         s.initVerify(clePubliqueClient);
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         DataOutputStream dos = new DataOutputStream(baos);
-        dos.writeUTF(idClient);
+        dos.writeUTF(idFacture);
         s.update(baos.toByteArray());
-
         // Vérification de la signature reçue
         return s.verify(signature);
     }

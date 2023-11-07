@@ -1,4 +1,4 @@
-package OVESP;
+package VESPAPS;
 
 public class ReponseLogout implements Reponse{
     private boolean log;

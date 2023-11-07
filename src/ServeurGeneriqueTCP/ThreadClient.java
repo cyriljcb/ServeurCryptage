@@ -1,7 +1,7 @@
 package ServeurGeneriqueTCP;
 
-import OVESP.Reponse;
-import OVESP.Requete;
+import VESPAPS.Reponse;
+import VESPAPS.Requete;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
