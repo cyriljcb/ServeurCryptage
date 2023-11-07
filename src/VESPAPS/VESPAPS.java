@@ -4,7 +4,7 @@ import Bean.BeanBDmetier;
 import Classe.Caddie;
 import Classe.Facture;
 import ServeurGeneriqueTCP.FinConnexionException;
-import ServeurGeneriqueTCP.Protocole;
+import ServeurGeneriqueTCP.ProtocoleSecurise;
 import Cryptage.*;
 
 import javax.crypto.*;
@@ -18,7 +18,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 
-public class VESPAPS implements Protocole {
+public class VESPAPS implements ProtocoleSecurise {
     private HashMap<String, Socket> clientsConnectes;
     private SecretKey cleSession;  //TODO faire une liste
     private BeanBDmetier bean;
@@ -35,44 +35,44 @@ public class VESPAPS implements Protocole {
     }
 
     @Override
-    public synchronized Reponse TraiteRequete(Requete requete, Socket socket){
-        if (requete instanceof RequeteLogin) {
+    public synchronized ReponseSecurise TraiteRequete(RequeteSecurise requeteSecurise, Socket socket){
+        if (requeteSecurise instanceof RequeteSecuriseLogin) {
             try {
-                return TraiteRequeteLOGIN((RequeteLogin) requete, socket);
+                return TraiteRequeteLOGIN((RequeteSecuriseLogin) requeteSecurise, socket);
             } catch (Exception e) {
                 System.out.println("problème dans le requeteLogin : "+e.getMessage());
                 e.printStackTrace();
             }
         }
-        if(requete instanceof  RequeteLOGOUT) {
+        if(requeteSecurise instanceof RequeteSecuriseLOGOUT) {
             try
             {
-                return TraiteRequeteLOGOUT((RequeteLOGOUT) requete);
+                return TraiteRequeteLOGOUT((RequeteSecuriseLOGOUT) requeteSecurise);
             }
             catch (Exception e) {
                 System.out.println("problème dans le requeteLogin : "+e.getMessage());
                 e.printStackTrace();
             }
         }
-        if (requete instanceof RequeteFacture) {
+        if (requeteSecurise instanceof RequeteSecuriseFacture) {
             try{
-                return TraiteRequeteFacture((RequeteFacture) requete);
+                return TraiteRequeteFacture((RequeteSecuriseFacture) requeteSecurise);
             } catch (Exception e) {
-                System.out.println("problème dans le RequeteFacture : "+e.getMessage());
+                System.out.println("problème dans le RequeteSecuriseFacture : "+e.getMessage());
                 e.printStackTrace();
             }
         }
-        if (requete instanceof RequetePayeFacture) {
+        if (requeteSecurise instanceof RequeteSecurisePayeFacture) {
             try{
-                return TraiteRequetePayeFacture((RequetePayeFacture) requete);
+                return TraiteRequetePayeFacture((RequeteSecurisePayeFacture) requeteSecurise);
             } catch (Exception e) {
                 System.out.println("problème dans le requetePayeFacture : "+e.getMessage());
                 e.printStackTrace();
             }
         }
-        if (requete instanceof RequeteCaddie) {
+        if (requeteSecurise instanceof RequeteSecuriseCaddie) {
             try{
-                return TraiteRequeteCaddie((RequeteCaddie) requete);
+                return TraiteRequeteCaddie((RequeteSecuriseCaddie) requeteSecurise);
             } catch (Exception e) {
                 System.out.println("problème dans le requetePayeFacture : "+e.getMessage());
                 e.printStackTrace();
@@ -81,7 +81,7 @@ public class VESPAPS implements Protocole {
         return null;
     }
 
-    private synchronized ReponseLogin TraiteRequeteLOGIN(RequeteLogin requete, Socket socket) throws Exception {
+    private synchronized ReponseSecuriseLogin TraiteRequeteLOGIN(RequeteSecuriseLogin requete, Socket socket) throws Exception {
         System.out.println("RequeteLOGIN reçue de " + requete.getLogin());
         boolean v = false;
         String message = "";
@@ -165,10 +165,10 @@ public class VESPAPS implements Protocole {
         if (v) {
             clientsConnectes.put(requete.getLogin(), socket);
         }
-        return new ReponseLogin(v, message);
+        return new ReponseSecuriseLogin(v, message);
     }
 
-    private synchronized ReponseFacture TraiteRequeteFacture(RequeteFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+    private synchronized ReponseSecuriseFacture TraiteRequeteFacture(RequeteSecuriseFacture requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         String message = "";
         List<Facture> factures = null;
 
@@ -191,10 +191,10 @@ public class VESPAPS implements Protocole {
             message = "Problème de vérification de la signature";
         }
 
-        return new ReponseFacture(messageCrypte, message);
+        return new ReponseSecuriseFacture(messageCrypte, message);
     }
 
-private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFacture requete) throws FinConnexionException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
+private synchronized ReponseSecurisePayeFacture TraiteRequetePayeFacture(RequeteSecurisePayeFacture requete) throws FinConnexionException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException, NoSuchAlgorithmException, InvalidKeyException, NoSuchProviderException, IOException {
     System.out.println("RequetePayeFACTURE reçue " );
     //décryptage
     byte[] messageDecrypte;
@@ -218,9 +218,9 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
     hm.update(vBytes);
     byte[] hmac = hm.doFinal() ;
 
-    return new ReponsePayeFacture(vBytes,hmac);
+    return new ReponseSecurisePayeFacture(vBytes,hmac);
 }
-    private synchronized ReponseCaddie TraiteRequeteCaddie(RequeteCaddie requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+    private synchronized ReponseSecuriseCaddie TraiteRequeteCaddie(RequeteSecuriseCaddie requete) throws FinConnexionException, CertificateException, KeyStoreException, IOException, NoSuchAlgorithmException, SignatureException, NoSuchProviderException, InvalidKeyException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         String message = "";
         List<Caddie> list = null;
 
@@ -240,18 +240,18 @@ private synchronized ReponsePayeFacture TraiteRequetePayeFacture(RequetePayeFact
             message = "Problème de vérification de la signature";
         }
 
-        return new ReponseCaddie(messageCrypte, message);
+        return new ReponseSecuriseCaddie(messageCrypte, message);
     }
 
     //
-    private synchronized ReponseLogout TraiteRequeteLOGOUT(RequeteLOGOUT requete) throws FinConnexionException {
-        System.out.println("RequeteLOGOUT reçue de " + requete.getLogin());
+    private synchronized ReponseSecuriseLogout TraiteRequeteLOGOUT(RequeteSecuriseLOGOUT requete) throws FinConnexionException {
+        System.out.println("RequeteSecuriseLOGOUT reçue de " + requete.getLogin());
         System.out.println("affichage avant retirer");
         afficherClientsConnectes();
         clientsConnectes.remove(requete.getLogin());
         System.out.println("affichage apres retirer");
         afficherClientsConnectes();
-        return new ReponseLogout(true);
+        return new ReponseSecuriseLogout(true);
     }
 
     public void afficherClientsConnectes() {

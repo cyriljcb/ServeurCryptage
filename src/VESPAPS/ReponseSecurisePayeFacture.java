@@ -1,13 +1,13 @@
 package VESPAPS;
 
-public class ReponsePayeFacture implements Reponse{
+public class ReponseSecurisePayeFacture implements ReponseSecurise {
     private byte[] HMAC;
     private byte[] message;
     private boolean paye;
-    ReponsePayeFacture(boolean v) {
+    ReponseSecurisePayeFacture(boolean v) {
         paye = v;
     }
-    ReponsePayeFacture(byte[] message,byte[] HMAC) {
+    ReponseSecurisePayeFacture(byte[] message, byte[] HMAC) {
         this.message = message;
         this.HMAC = HMAC;
     }

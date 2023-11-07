@@ -1,9 +1,9 @@
 package VESPAPS;
 
-public class RequeteLOGOUT implements Requete{
+public class RequeteSecuriseLOGOUT implements RequeteSecurise {
     private String login;
 
-    public RequeteLOGOUT(String l) {
+    public RequeteSecuriseLOGOUT(String l) {
         login = l;
     }
     public String getLogin() {

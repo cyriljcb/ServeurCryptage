@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.security.*;
 import java.security.cert.CertificateException;
 
-public class RequeteFacture implements Requete{
+public class RequeteSecuriseFacture implements RequeteSecurise {
     private String idClient;
     private byte[] signature;
-    public RequeteFacture(String idCli) throws NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, InvalidKeyException, SignatureException {
+    public RequeteSecuriseFacture(String idCli) throws NoSuchAlgorithmException, NoSuchProviderException, UnrecoverableKeyException, CertificateException, KeyStoreException, IOException, InvalidKeyException, SignatureException {
         idClient = idCli;
         Signature s = Signature.getInstance("SHA1withRSA","BC");
         s.initSign(RecupereClePriveeClient());

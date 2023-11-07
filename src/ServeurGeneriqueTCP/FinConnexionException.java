@@ -1,17 +1,17 @@
 package ServeurGeneriqueTCP;
 
-import VESPAPS.ReponseLogin;
+import VESPAPS.ReponseSecuriseLogin;
 
 public class FinConnexionException extends Exception {
-    private ReponseLogin reponse;
+    private ReponseSecuriseLogin reponse;
 
-    public FinConnexionException(ReponseLogin reponse)
+    public FinConnexionException(ReponseSecuriseLogin reponse)
     {
-        super("Fin de Connexion décidée par protocole");
+        super("Fin de Connexion décidée par protocoleSecurise");
         this.reponse = reponse;
     }
 
-    public ReponseLogin getReponse()
+    public ReponseSecuriseLogin getReponse()
     {
         return reponse;
     }

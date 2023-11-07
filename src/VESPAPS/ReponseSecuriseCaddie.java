@@ -4,17 +4,17 @@ import Classe.Caddie;
 
 import java.util.List;
 
-public class ReponseCaddie implements Reponse{
+public class ReponseSecuriseCaddie implements ReponseSecurise {
     private List<Caddie> CaddieList;
 
 
     private byte[] caddieCrypte;
     private String message;
 
-    ReponseCaddie(List<Caddie> liste) {
+    ReponseSecuriseCaddie(List<Caddie> liste) {
         CaddieList = liste;
     }
-    ReponseCaddie(byte[] caddie,String message) {
+    ReponseSecuriseCaddie(byte[] caddie, String message) {
         if(message.isEmpty())
             caddieCrypte = caddie;
         else

@@ -1,33 +1,29 @@
 package ServeurGeneriqueTCP;
 
-import VESPAPS.Reponse;
-import VESPAPS.Requete;
+import VESPAP.Reponse;
+import VESPAP.Requete;
 
-import javax.crypto.BadPaddingException;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
-import java.security.*;
-import java.security.cert.CertificateException;
-import java.sql.SQLException;
-
 public abstract class ThreadClient extends Thread
 {
     protected Protocole protocole;
     protected Socket csocket;
+    protected Logger logger;
     private int numero;
 
     private static int numCourant = 1;
 
-    public ThreadClient(Protocole protocole, Socket csocket) throws
-            IOException
+    public ThreadClient(Protocole protocole, ThreadGroup groupe, Logger logger)
+            throws IOException
     {
-        super("TH Client " + numCourant + " (protocole=" + protocole.getNom() + ")");
+        super(groupe,"TH Client " + numCourant + " (protocole=" + protocole.getNom()
+                + ")");
         this.protocole = protocole;
-        this.csocket = csocket;
+        this.csocket = null;
+        this.logger = logger;
         this.numero = numCourant++;
     }
 
@@ -54,20 +50,16 @@ public abstract class ThreadClient extends Thread
                 System.out.println("Fin connexion demandée par protocole");
                 if (oos != null && ex.getReponse() != null)
                     oos.writeObject(ex.getReponse());
-            } catch (CertificateException | KeyStoreException | SignatureException | InvalidKeyException |
-                     UnrecoverableKeyException | NoSuchPaddingException | IllegalBlockSizeException |
-                     BadPaddingException e) {
-                throw new RuntimeException(e);
             }
-        } catch (IOException | SQLException | NoSuchAlgorithmException | NoSuchProviderException ex) {
-            System.out.println("Erreur I/O : "+ex.getMessage());
+        } catch (IOException ex) {
+            System.out.println("Erreur I/O");
         } catch (ClassNotFoundException ex) {
             System.out.println("Erreur requete invalide");
         } finally {
             try {
                 csocket.close();
             } catch (IOException ex) {
-                System.out.println("Erreur fermeture socket");
+                logger.Trace("Erreur fermeture socket");
             }
         }
     }

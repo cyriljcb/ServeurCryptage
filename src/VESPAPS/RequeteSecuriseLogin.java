@@ -6,7 +6,7 @@ import java.security.*;
 import java.security.cert.CertificateException;
 import java.util.Date;
 
-public class RequeteLogin implements Requete{
+public class RequeteSecuriseLogin implements RequeteSecurise {
     private String login;
     private String mdp;
 
@@ -21,7 +21,7 @@ public class RequeteLogin implements Requete{
     public void setData2(byte[] d) { data2 = d; }
     public byte[] getData2() { return data2; }
     boolean nouveau = false;
-    public RequeteLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
+    public RequeteSecuriseLogin(String l, String p, boolean v) throws NoSuchAlgorithmException, NoSuchProviderException, IOException, InvalidKeyException, SignatureException, UnrecoverableKeyException, CertificateException, KeyStoreException, IllegalBlockSizeException, NoSuchPaddingException, BadPaddingException {
         login = l;
         nouveau = v;
 

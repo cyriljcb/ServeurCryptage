@@ -1,12 +1,12 @@
 package ServeurGeneriqueTCP;
 import java.io.IOException;
 import java.net.*;
-public class ThreadServeurDemande extends ThreadServeur
+public class ThreadServeurSecuDemande extends ThreadServeurSecu
 {
-    public ThreadServeurDemande(int port, Protocole protocole) throws
+    public ThreadServeurSecuDemande(int port, ProtocoleSecurise protocoleSecurise) throws
             IOException
     {
-        super(port, protocole);
+        super(port, protocoleSecurise);
     }
 
     @Override
@@ -21,7 +21,7 @@ public class ThreadServeurDemande extends ThreadServeur
                 ssocket.setSoTimeout(2000);
                 csocket = ssocket.accept();
                 System.out.println("Connexion acceptée, création TH Client");
-                Thread th = new ThreadClientDemande(protocole,csocket);
+                Thread th = new ThreadClientSecuDemande(protocoleSecurise,csocket);
                 th.start();
             }
             catch (SocketTimeoutException ex)

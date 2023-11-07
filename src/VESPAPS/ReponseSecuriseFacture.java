@@ -4,18 +4,18 @@ import Classe.Facture;
 
 import java.util.List;
 
-public class ReponseFacture implements Reponse{
+public class ReponseSecuriseFacture implements ReponseSecurise {
     private List<Facture> facturelist = null;
     private byte[] factureCrypte;
     private String message;
 
-    ReponseFacture(byte[] facture,String message) {
+    ReponseSecuriseFacture(byte[] facture, String message) {
         if(message.isEmpty())
             factureCrypte = facture;
         else
             this.message = message;
     }
-    ReponseFacture(List<Facture> facture) {
+    ReponseSecuriseFacture(List<Facture> facture) {
         facturelist = facture;
     }
     public List<Facture> getFacture() {

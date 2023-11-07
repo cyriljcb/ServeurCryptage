@@ -1,10 +1,10 @@
 package VESPAPS;
 
-public class ReponseLogin implements Reponse {
+public class ReponseSecuriseLogin implements ReponseSecurise {
     private boolean valide;
     private String message;
 
-    ReponseLogin(boolean v,String message) {
+    ReponseSecuriseLogin(boolean v, String message) {
         valide = v;
         this.message = message;
     }

@@ -33,7 +33,6 @@ public class Caddie implements Serializable {
             dos.writeUTF(image);
             return baos.toByteArray();
         } catch (IOException e) {
-            // Gérez l'exception comme requis (peut-être la journalisation ou le renvoi d'un tableau vide)
             e.printStackTrace();
             return new byte[0];
         }
