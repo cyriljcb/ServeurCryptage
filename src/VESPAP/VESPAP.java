@@ -19,7 +19,7 @@ public class VESPAP implements Protocole {
         //logger = log;
         System.out.println("est passé ovesp");
         clientsConnectes = new HashMap<>();
-        bean = new BeanBDmetier("jdbc:mysql://192.168.47.128/PourStudent" , "Student" , "PassStudent1_");
+        bean = new BeanBDmetier("jdbc:mysql://192.168.126.128/PourStudent" , "Student" , "PassStudent1_");
     }
 
     @Override

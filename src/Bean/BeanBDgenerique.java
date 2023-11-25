@@ -17,7 +17,9 @@ public class BeanBDgenerique {
 
     public synchronized ResultSet executeQuery(String sql, String nom) {
         try {
-            return stmt.executeQuery(sql);
+            PreparedStatement pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, nom); // Définissez le paramètre
+            return pstmt.executeQuery();
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
