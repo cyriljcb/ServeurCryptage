@@ -26,7 +26,7 @@ public class ThreadServeurPool extends ThreadServeur
         try
         {
             for (int i=0 ; i<taillePool ; i++) {
-                System.out.println("création de thread client num "+i+1);
+                System.out.println("création de thread client num "+i);
                 new ThreadClientPool(protocole, connexionsEnAttente, pool, logger).start();
             }
         }

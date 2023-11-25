@@ -4,26 +4,26 @@ import java.sql.*;
 
 public class BeanBDgenerique {
     private Connection con;
+    private Statement stmt;
 
     public BeanBDgenerique(String URLJDBC, String nom, String mdp) {
         try {
             con = DriverManager.getConnection(URLJDBC, nom, mdp);
+            stmt = con.createStatement();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public ResultSet executeQuery(String sql, String nom) {
+    public synchronized ResultSet executeQuery(String sql, String nom) {
         try {
-            PreparedStatement pstmt = con.prepareStatement(sql);
-            pstmt.setString(1, nom); // Définissez le paramètre
-            return pstmt.executeQuery();
+            return stmt.executeQuery(sql);
         } catch (SQLException e) {
             e.printStackTrace();
             return null;
         }
     }
-    public void executeUpdate(String sql, String nom,String password) {
+    public synchronized void executeUpdate(String sql, String nom,String password) {
         try {
             PreparedStatement pstmt = con.prepareStatement(sql);
             pstmt.setString(1, nom); // Définissez le paramètre
@@ -34,7 +34,7 @@ public class BeanBDgenerique {
         }
     }
 
-    public void executeUpdate(String sql, String nom) {
+    public synchronized void executeUpdate(String sql, String nom) {
         try {
             PreparedStatement pstmt = con.prepareStatement(sql);
             pstmt.setString(1, nom);

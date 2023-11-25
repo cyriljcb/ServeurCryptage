@@ -18,7 +18,7 @@ public class BeanBDmetier {
     public boolean LoginEmploye(String nom, String mdp) {
         boolean test = false;
         try {
-            String sql = "SELECT * FROM employes WHERE login = ?";
+            String sql = "SELECT * FROM employes WHERE login = ";
             ResultSet rs = BDg.executeQuery(sql, nom);
             System.out.println("requete sql : "+sql);
             while (rs.next()) {

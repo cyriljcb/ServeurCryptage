@@ -24,7 +24,6 @@ public class VESPAPS implements ProtocoleSecurise {
     private BeanBDmetier bean;
 
     public VESPAPS() {
-        //logger = log;
         clientsConnectes = new HashMap<>();
         bean = new BeanBDmetier("jdbc:mysql://192.168.47.128/PourStudent", "Student", "PassStudent1_");
     }
